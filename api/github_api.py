@@ -71,3 +71,25 @@ def get_pr_details_data(token: str, owner: str, repo: str, pr_num: int):
     }
     logging.debug('Запрос на детальную информацию по pr')
     return get_request(url=url, headers=header)
+
+
+def grt_pr_reviewers(token: str, owner: str, repo: str, pr_num: int):
+    if not token:
+        logging.critical('Нет token')
+        TypeError('Нет token')
+    if not owner:
+        logging.critical('Нет owner')
+        TypeError('Нет owner')
+    if not repo:
+        logging.critical('Нет repo')
+        TypeError('Нет repo')
+    if not pr_num:
+        logging.critical('Нет pr_num')
+        TypeError('Нет pr_num')
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_num}/reviews"
+    header = {
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+    logging.debug(f'Запрос на ревьюеров pr {pr_num}')
+    return get_request(url=url, headers=header)
