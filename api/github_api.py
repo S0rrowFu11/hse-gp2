@@ -44,7 +44,7 @@ def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
     while True:
         params['page_number'] = page_number
         parsed_pr_page = get_request(url=url, headers=header, params=params)
-        if not parsed_pr_page or page_number == 2:
+        if not parsed_pr_page:
             logging.debug(f'Страница с pull requests пустая')
             break
         all_pages.extend(parsed_pr_page)
