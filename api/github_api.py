@@ -37,7 +37,7 @@ def get_request(url: str, headers: dict, max_retries: int = 5, backoff_factor: f
             sleep_duration = max(0, reset_time - time.time()) + 5  # Adding 5 seconds for safety
             logging.warning(f'Rate limit exceeded. Sleeping for {sleep_duration} seconds.')
             time.sleep(sleep_duration)
-            return get_request(url, headers, params, max_retries, backoff_factor)
+            return get_request(url, headers, params)
 
         response.raise_for_status()
         return response.json()
