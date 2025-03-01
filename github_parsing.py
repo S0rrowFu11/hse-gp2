@@ -44,29 +44,36 @@ for parsing_from in parsing_froms:
 
     logger.info(f'Начало парсинга {repo}')
     data = []
-    pull_requests = get_all_pull_requests(token=GITHUB_TOKEN, owner=owner, repo=repo)
-    for pull_request in pull_requests:
-        logging.info(f'Обрабатываем pull_request №{pull_request["number"]}')
-        pull_request_details = get_pr_details_data(token=GITHUB_TOKEN, owner=owner, repo=repo,
-                                                   pr_num=pull_request["number"])
-        reviewers = get_pr_reviewers(token=GITHUB_TOKEN, owner=owner, repo=repo, pr_num=pull_request["number"])
-        pull_request_info = {
-            'number': pull_request['number'],
-            'title': pull_request['title'],
-            'user_login': pull_request['user']['login'],
-            'created_at': pull_request['created_at'],
-            'closed_at': pull_request['closed_at'],
-            'merged_at': pull_request_details.get('merged_at'),
-            'additions': pull_request_details.get('additions', 0),
-            'deletions': pull_request_details.get('deletions', 0),
-            'label': [label['name'] for label in pull_request.get('labels', [])],
-            'reviewers': reviewers
-        }
-        data.append(pull_request_info)
+    pull_requests_numbers = get_all_pull_requests(token=GITHUB_TOKEN, owner=owner, repo=repo)
+    logger.debug(f'Все pull реквесты из {repo} взяты')
     json_filename = f'{repo}_pull_requests_{timestamp}.json'
     with open(json_filename, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("[\n")
+        first = True
+        for pull_request_number in pull_requests_numbers:
+            if not first:
+                f.write(",\n")
+            first = False
+            logging.info(f'Обрабатываем pull_request №{pull_request_number}')
+            pull_request_details = get_pr_details_data(token=GITHUB_TOKEN, owner=owner, repo=repo,
+                                                       pr_num=pull_request_number)
+            reviewers = get_pr_reviewers(token=GITHUB_TOKEN, owner=owner, repo=repo, pr_num=pull_request_number)
 
+            pull_request_info = {
+                'number': pull_request_number,
+                'title': pull_request_details.get('title', 'Нет названия'),
+                'user_login': pull_request_details['user']['login'],
+                'created_at': pull_request_details['created_at'],
+                'closed_at': pull_request_details.get('closed_at'),
+                'merged_at': pull_request_details.get('merged_at'),
+                'additions': pull_request_details.get('additions', 0),
+                'deletions': pull_request_details.get('deletions', 0),
+                'label': [label['name'] for label in pull_request_details.get('labels', [])],
+                'reviewers': reviewers
+            }
+            f.write(json.dumps(pull_request_info, ensure_ascii=False, indent=2))
+            logger.debug(f'pull реквест {pull_request_number} записан')
+        f.write("\n]")
     contributors = get_contributors(token=GITHUB_TOKEN, owner=owner, repo=repo)
     data = []
     for contributor in contributors:
