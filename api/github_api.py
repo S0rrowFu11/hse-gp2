@@ -34,7 +34,7 @@ def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
         logging.critical('Нет repo')
         TypeError('Нет repo')
     url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
-    params = {'state': 'all', 'per_page': 5, 'page_number': 1}
+    params = {'state': 'all', 'per_page': 100, 'page_number': 1}
     header = {
         'Authorization': f'token {token}',
         'Accept': 'application/vnd.github.v3+json'
