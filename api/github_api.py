@@ -3,7 +3,8 @@ import logging
 import json
 
 
-def get_request(url: str, headers: dict, params: dict) -> json:
+def get_request(url: str, headers: dict, **kwargs) -> json:
+    params = kwargs.get("params", None)
     if not url:
         logging.critical('Нет url')
         TypeError('Нет url')
@@ -32,7 +33,7 @@ def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
         logging.critical('Нет repo')
         TypeError('Нет repo')
     url = f'https://api.github.com/repos/{owner}/{repo}/pulls'
-    params = {'state': 'all', 'per_page': 100, 'page_number': 1}
+    params = {'state': 'all', 'per_page': 5, 'page_number': 1}
     header = {
         'Authorization': f'token {token}',
         'Accept': 'application/vnd.github.v3+json'
@@ -41,8 +42,8 @@ def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
     page_number = 1
     while True:
         params['page_number'] = page_number
-        parsed_pr_page = get_request(url=url, params=params, headers=header)
-        if not parsed_pr_page:
+        parsed_pr_page = get_request(url=url, headers=header, params=params)
+        if not parsed_pr_page or page_number == 2:
             logging.debug(f'Страница с pull requests пустая')
             break
         all_pages.extend(parsed_pr_page)
@@ -73,7 +74,7 @@ def get_pr_details_data(token: str, owner: str, repo: str, pr_num: int):
     return get_request(url=url, headers=header)
 
 
-def grt_pr_reviewers(token: str, owner: str, repo: str, pr_num: int):
+def get_pr_reviewers(token: str, owner: str, repo: str, pr_num: int):
     if not token:
         logging.critical('Нет token')
         TypeError('Нет token')
