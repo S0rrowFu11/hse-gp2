@@ -60,3 +60,12 @@ for pull_request in pull_requests:
     data.append(pull_request_info)
 with open(json_filename, 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
+
+contributors = get_contributors(token=GITHUB_TOKEN, owner=owner, repo=repo)
+data = []
+for contributor in contributors:
+    user_details = get_user_details(username=contributor['login'], token=GITHUB_TOKEN)
+    data.append(user_details)
+
+with open('userss' + json_filename, 'w', encoding='utf-8') as f2:
+    json.dump(data, f2, ensure_ascii=False, indent=2)
