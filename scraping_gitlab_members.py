@@ -35,30 +35,30 @@ wait = WebDriverWait(driver, 2)
 
 account_links = []
 page = 1
-base_url = "https://gitlab.com/gitlab-org/gitlab/-/project_members"
+base_url = 'https://gitlab.com/gitlab-org/gitlab/-/project_members'
 
 while True:
-    url = f"https://gitlab.com/gitlab-org/gitlab/-/project_members?page={page}"
+    url = f'https://gitlab.com/gitlab-org/gitlab/-/project_members?page={page}'
     driver.get(url)
-    logger.info(f"открываем страницу: {url}")
+    logger.info(f'открываем страницу: {url}')
     try:
         # ожидание загрузки
-        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a.js-user-link")))
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'a.js-user-link')))
     except Exception as e:
         logger.critical('на странице ничего нет')
         break
     # берем ссылки на аккаунты
-    members = driver.find_elements(By.CSS_SELECTOR, "a.js-user-link")
+    members = driver.find_elements(By.CSS_SELECTOR, 'a.js-user-link')
     if not members:
-        logger.info(f"на странице {page} участников не найдено, завершаем цикл.")
+        logger.info(f'на странице {page} участников не найдено, завершаем цикл.')
         break
     for member in members:
         account_links.append(member.get_attribute("href"))
-    logger.debug(f"страница {page} обработана, всего найдено ссылок: {len(account_links)}")
+    logger.debug(f'страница {page} обработана, всего найдено ссылок: {len(account_links)}')
     page += 1
-    time.sleep(2)  # задержка, чтобы не уйти в бан
+    time.sleep(3)  # задержка, чтобы не уйти в бан
 driver.quit()
 
 df = pd.DataFrame(account_links, columns=['members_links'])
 df.to_csv('account_links.csv', index=False)
-print("файл успешно сохранён!")
+logger.info('файл сохранен')
