@@ -7,8 +7,9 @@ from api import *
 
 parsing_froms = [
     ('ydb-platform', 'ydb'),
-    ('ClickHouse', 'ClickHouse'),
-    ('catboost', 'catboost')
+    #('ClickHouse', 'ClickHouse'),
+    ('catboost', 'catboost'),
+    ('userver-framework', 'userver')
 ]
 # .env
 load_dotenv()
