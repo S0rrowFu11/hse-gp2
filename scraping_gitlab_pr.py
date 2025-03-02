@@ -32,15 +32,15 @@ options = webdriver.ChromeOptions()
 options.add_argument("--headless")
 options.add_argument("--disable-gpu")
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-driver.set_page_load_timeout(20)
-wait = WebDriverWait(driver, 20)
+driver.set_page_load_timeout(5)
+wait = WebDriverWait(driver, 30)
 
 start_url = "https://gitlab.com/gitlab-org/gitlab/-/merge_requests/?sort=created_date&state=all"
 
 # берем только нужные для нас ссылки, маска регулярного выражения:
 reg = re.compile(r'/-/merge_requests/\d+($|\?)')
-pages = 1
 mr_links = []
+pages = 1
 while True:
     # берем только первые 250 страниц
     if pages >= 250:
@@ -68,11 +68,16 @@ while True:
         driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
         next_button.click()
         # рандомный слип, чтобы запутать gitlab
-        time.sleep(5 + random.randint(1, 10))
+        random_ver = random.randint(1, 10)
+        if random_ver >= 8:
+            time.sleep(5 + random.randint(100, 240))
+        elif random_ver <= 5:
+            time.sleep(5 + random.randint(10, 40))
+        else:
+            time.sleep(5 + random.randint(1, 10))
     except Exception as e:
         logging.warning("кнопка Next не найдена или недоступна", e)
         break
-
 driver.quit()
 
 # сохраняем в файл
