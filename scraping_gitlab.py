@@ -1,4 +1,5 @@
 from selenium import webdriver
+import pandas as pd
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -38,34 +39,7 @@ while True:
     time.sleep(2)  # задержка, чтобы не уйти в бан
 driver.quit()
 
-print(account_links)
-print(len(account_links))
-
-collected_data = []
-
-for url in account_links:
-    try:
-        driver.get(url)
-    except Exception as e:
-        print(f"ошибка при открытии {url}: {e}")
-        collected_data.append({"login": None, "organization": None})
-        continue
-    time.sleep(2)
-    # получаем логин и организацию
-    try:
-        login_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.profile-name")))
-        login = login_element.text.strip()
-    except Exception:
-        break
-    try:
-        org_element = driver.find_element(By.CSS_SELECTOR, "div.user-organization")
-        organization = org_element.text.strip() if org_element.text.strip() else None
-    except Exception:
-        organization = None
-    collected_data.append({"login": login, "organization": organization})
-    print(f"собраны данные: login: {login}, организация: {organization}")
-
-driver.quit()
-
-print("Все данные собраны:")
-print(collected_data)
+df = pd.DataFrame(account_links, columns=['members_links'])
+# Сохраняем DataFrame в CSV файл без индекса
+df.to_csv('account_links.csv', index=False)
+print("файл успешно сохранён!")
