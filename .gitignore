@@ -1,3 +1,5 @@
 .env
 *.log
 *.json
+/chrome-win64/
+*.csv
