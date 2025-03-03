@@ -5,7 +5,7 @@ import time
 
 
 
-def get_request(url: str, headers: dict, max_retries: int = 5, backoff_factor: float = 1.0, **kwargs) -> json:
+def get_request(url: str, headers: dict, **kwargs) -> json:
     params = kwargs.get("params", None)
     if not url:
         logging.critical('Нет url')
