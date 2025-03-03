@@ -5,6 +5,7 @@ import time
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+
 def get_request(url: str, headers: dict, max_retries: int = 5, backoff_factor: float = 1.0, **kwargs) -> json:
     params = kwargs.get("params", None)
     if not url:
@@ -161,7 +162,19 @@ def get_contributors(token: str, owner: str, repo: str):
         'Authorization': f'token {token}',
         'Accept': 'application/vnd.github.v3+json'
     }
-    return get_request(url=url, headers=header)
+    contributors = []
+    per_page = 100
+    page = 1
+    while True:
+        params = {'per_page': per_page, 'page': page}
+        data = get_request(url=url, headers=header, params=params)
+        if not data:
+            break
+        contributors.extend(data)
+        if len(data) < per_page:
+            break
+        page += 1
+    return contributors
 
 
 def get_user_details(username: str, token: str):
