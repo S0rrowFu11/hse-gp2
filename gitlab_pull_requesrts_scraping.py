@@ -92,6 +92,39 @@ for link in merge_request_links:
     except Exception as e:
         data["closed_at"] = None
 
+    logger.info('берем теги')
+    try:
+        label_elements = driver.find_elements(By.XPATH, "//span[@data-testid='selected-label-content']")
+        labels = [element.get_attribute("data-qa-label-name").strip() for element in label_elements if
+                  element.get_attribute("data-qa-label-name")]
+        data["labels"] = labels
+    except Exception as e:
+        data["labels"] = []
+
+    logger.info('находи кнопку Changes и кликаем на неё')
+    try:
+        changes_button = wait.until(EC.presence_of_element_located((By.XPATH, "//a[@data-action='diffs']")))
+        driver.execute_script("arguments[0].scrollIntoView(true);", changes_button)
+        time.sleep(1)
+        driver.execute_script("arguments[0].click();", changes_button)
+        time.sleep(3)
+    except Exception as e:
+        logger.warning(f"ошибка при нажатии на кнопку Changes в {link}: {e}")
+
+    try:
+        logger.info('берем информацию по кол-ву добавленных строк')
+        additions_elem = driver.find_element(By.XPATH, "//span[@data-testid='js-file-addition-line']")
+        additions_text = additions_elem.text
+        data["additions"] = int(additions_text.replace(",", "").strip()) if additions_text.strip().isdigit() else None
+        logger.info('берем информацию по кол-ву удаленных строк')
+        deletions_elem = driver.find_element(By.XPATH, "//span[@data-testid='js-file-deletion-line']")
+        deletions_text = deletions_elem.text
+        data["deletions"] = int(deletions_text.replace(",", "").strip()) if deletions_text.strip().isdigit() else None
+
+    except Exception as e:
+        logger.warning(f"ошибка при извлечении статистики изменений для {link}: {e}")
+        data["additions"] = None
+        data["deletions"] = None
 
     logger.info(f"обработан {link}")
     output_file.write(json.dumps(data, ensure_ascii=False) + "\n")
