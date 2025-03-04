@@ -2,10 +2,10 @@ import requests
 import logging
 import json
 import time
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
-def get_request(url: str, headers: dict, max_retries: int = 5, backoff_factor: float = 1.0, **kwargs) -> json:
+
+
+def get_request(url: str, headers: dict, **kwargs) -> json:
     params = kwargs.get("params", None)
     if not url:
         logging.critical('Нет url')
@@ -13,54 +13,21 @@ def get_request(url: str, headers: dict, max_retries: int = 5, backoff_factor: f
     if not headers:
         logging.critical('Нет headers')
         TypeError('Нет headers')
-    session = requests.Session()
-    retries = Retry(
-        total=max_retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=[429, 500, 502, 503, 504],
-        raise_on_status=False
-    )
-    adapter = HTTPAdapter(max_retries=retries)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-
-    try:
-        if params:
-            logging.debug(f'Sending GET request to {url} with params: {params}')
-            response = session.get(url, headers=headers, params=params)
-        else:
-            logging.debug(f'Sending GET request to {url} without params')
-            response = session.get(url, headers=headers)
-
-        if response.status_code == 403:
-            reset_time = int(response.headers.get('X-RateLimit-Reset', time.time() + 60))
-            sleep_duration = max(0, reset_time - time.time()) + 5  # Adding 5 seconds for safety
-            logging.warning(f'Rate limit exceeded. Sleeping for {sleep_duration} seconds.')
-            time.sleep(sleep_duration)
-            return get_request(url, headers, params)
-
-        response.raise_for_status()
-        return response.json()
-
-    except requests.exceptions.RequestException as e:
-        logging.error(f'Request failed: {e}')
+    if not params:
+        logging.info('Нет params')
+        r = requests.get(url, headers=headers)
+    else:
+        r = requests.get(url, headers=headers, params=params)
+    if r.status_code == 403:
+        reset_time = int(r.headers.get('X-RateLimit-Reset', time.time() + 60))
+        sleep_duration = max(0, reset_time - time.time()) + 5  # Добавляем 5 секунд для надежности
+        logging.warning(f'Превышен лимит запросов. Ожидание {sleep_duration} секунд до сброса лимита.')
+        time.sleep(sleep_duration)
+        return get_request(url, headers, **kwargs)
+    if r.status_code != 200:
+        logging.error(f'Ошибка в get запросе: {r.status_code}, {r.text}')
         return None
-
-    # if not params:
-    #     logging.info('Нет params')
-    #     r = requests.get(url, headers=headers)
-    # else:
-    #     r = requests.get(url, headers=headers, params=params)
-    # if r.status_code == 403:
-    #     reset_time = int(r.headers.get('X-RateLimit-Reset', time.time() + 60))
-    #     sleep_duration = max(0, reset_time - time.time()) + 5  # Добавляем 5 секунд для надежности
-    #     logging.warning(f'Превышен лимит запросов. Ожидание {sleep_duration} секунд до сброса лимита.')
-    #     time.sleep(sleep_duration)
-    #     return get_request(url, headers, **kwargs)
-    # if r.status_code != 200:
-    #     logging.error(f'Ошибка в get запросе: {r.status_code}, {r.text}')
-    #     return None
-    # return r.json()
+    return r.json()
 
 
 def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
@@ -85,7 +52,6 @@ def get_all_pull_requests(token: str, owner: str, repo: str) -> list[any]:
     while True:
         params['page'] = page_number
         parsed_pr_page = get_request(url=url, headers=header, params=params)
-        print(parsed_pr_page)
         if not parsed_pr_page:
             logging.debug(f'Страница с pull requests пустая')
             break
@@ -161,7 +127,19 @@ def get_contributors(token: str, owner: str, repo: str):
         'Authorization': f'token {token}',
         'Accept': 'application/vnd.github.v3+json'
     }
-    return get_request(url=url, headers=header)
+    contributors = []
+    per_page = 100
+    page = 1
+    while True:
+        params = {'per_page': per_page, 'page': page}
+        data = get_request(url=url, headers=header, params=params)
+        if not data:
+            break
+        contributors.extend(data)
+        if len(data) < per_page:
+            break
+        page += 1
+    return contributors
 
 
 def get_user_details(username: str, token: str):
